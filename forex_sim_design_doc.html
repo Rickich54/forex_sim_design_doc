@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Forex Sim — Product Design Document</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0d0f14;
+  --surface: #13161e;
+  --surface2: #1a1e2a;
+  --border: rgba(255,255,255,0.07);
+  --border2: rgba(255,255,255,0.12);
+  --text: #e8e6df;
+  --muted: #8a8880;
+  --hint: #4a4845;
+  --blue: #2c8af4;
+  --blue-bg: rgba(44,138,244,0.12);
+  --green: #1d9e75;
+  --green-bg: rgba(29,158,117,0.12);
+  --red: #e24b4a;
+  --red-bg: rgba(226,75,74,0.12);
+  --amber: #ef9f27;
+  --amber-bg: rgba(239,159,39,0.12);
+  --purple: #7f77dd;
+  --purple-bg: rgba(127,119,221,0.12);
+  --radius: 10px;
+  --radius-sm: 6px;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Syne', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.mono { font-family: 'DM Mono', monospace; }
+
+/* Layout */
+.layout { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 220px;
+  min-height: 100vh;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 28px 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+.main { flex: 1; padding: 40px 48px; max-width: 900px; }
+
+/* Sidebar */
+.sidebar-logo {
+  padding: 0 20px 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 16px;
+}
+.sidebar-logo .logo-mark {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.sidebar-logo .logo-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 2px;
+}
+.nav-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--hint);
+  padding: 0 20px;
+  margin: 16px 0 6px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 20px;
+  font-size: 13px;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all .15s;
+  border-left: 2px solid transparent;
+  text-decoration: none;
+}
+.nav-item:hover { color: var(--text); background: var(--surface2); }
+.nav-item.active {
+  color: var(--text);
+  border-left-color: var(--blue);
+  background: var(--blue-bg);
+}
+.nav-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: .5;
+  flex-shrink: 0;
+}
+.nav-item.active .nav-dot { opacity: 1; background: var(--blue); }
+
+/* Page header */
+.page-header { margin-bottom: 36px; }
+.page-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--blue);
+  letter-spacing: .08em;
+  margin-bottom: 8px;
+}
+.page-title { font-size: 28px; font-weight: 600; line-height: 1.2; margin-bottom: 10px; }
+.page-desc { font-size: 14px; color: var(--muted); max-width: 560px; line-height: 1.7; }
+
+/* Panels */
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* Section */
+.sec { margin-bottom: 40px; }
+.sec-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--hint);
+  margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sec-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* Screen grid */
+.screen-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+.screen-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  transition: border-color .2s;
+}
+.screen-card:hover { border-color: var(--border2); }
+.screen-header {
+  padding: 12px 16px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.screen-name { font-size: 13px; font-weight: 500; }
+.screen-tag {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: var(--blue-bg);
+  color: var(--blue);
+  border: 1px solid rgba(44,138,244,0.2);
+}
+.screen-body { padding: 16px; }
+.wf-frame {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.wf-row { display: flex; align-items: center; gap: 8px; }
+.wf-key {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  color: var(--hint);
+  min-width: 52px;
+}
+.wf-val {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 4px 10px;
+  font-size: 11px;
+  color: var(--muted);
+  flex: 1;
+}
+.chip-row { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; }
+.chip {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  border: 1px solid var(--border2);
+  color: var(--muted);
+}
+.action-list { list-style: none; }
+.action-list li {
+  font-size: 12px;
+  color: var(--muted);
+  padding: 4px 0;
+  padding-left: 14px;
+  position: relative;
+  line-height: 1.5;
+}
+.action-list li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  color: var(--hint);
+  font-size: 10px;
+  top: 5px;
+}
+
+/* Doc cards */
+.doc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.doc-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+}
+.doc-card-title { font-size: 13px; font-weight: 500; margin-bottom: 10px; color: var(--text); }
+.doc-card-body { font-size: 13px; color: var(--muted); line-height: 1.75; }
+.doc-card-body p { margin-bottom: 8px; }
+.doc-card-body p:last-child { margin-bottom: 0; }
+
+/* Typography demo */
+.type-table { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; margin-bottom: 16px; }
+.type-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  gap: 16px;
+}
+.type-row:last-child { border-bottom: none; }
+.type-sample { color: var(--text); }
+.type-meta { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--hint); white-space: nowrap; }
+
+/* Color swatches */
+.swatch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; margin-bottom: 20px; }
+.swatch-item {}
+.swatch-color { height: 52px; border-radius: var(--radius-sm); border: 1px solid var(--border); margin-bottom: 6px; }
+.swatch-name { font-size: 11px; color: var(--muted); }
+.swatch-hex { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--hint); }
+
+/* Principle cards */
+.principle-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 10px;
+  border-left: 3px solid var(--blue);
+}
+.principle-title { font-size: 13px; font-weight: 500; margin-bottom: 8px; }
+.principle-body { font-size: 13px; color: var(--muted); line-height: 1.75; }
+
+/* Flow steps */
+.flow-wrap {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 14px;
+}
+.flow-steps { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 12px 0; }
+.flow-step {
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius-sm);
+  padding: 7px 13px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.flow-arrow { color: var(--hint); font-size: 12px; padding: 0 2px; }
+.flow-desc { font-size: 13px; color: var(--muted); line-height: 1.7; margin-top: 10px; }
+
+/* XP demo */
+.xp-demo {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 14px;
+}
+.xp-row { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.xp-badge {
+  width: 40px; height: 40px;
+  border-radius: 50%;
+  background: var(--purple-bg);
+  border: 1px solid rgba(127,119,221,.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--purple);
+  flex-shrink: 0;
+}
+.xp-info { flex: 1; }
+.xp-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+.xp-bar-track { background: var(--surface2); border-radius: 20px; height: 6px; overflow: hidden; }
+.xp-bar-fill { height: 100%; border-radius: 20px; background: var(--purple); width: 85%; }
+.xp-next { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--hint); }
+.xp-body { font-size: 13px; color: var(--muted); line-height: 1.7; }
+
+/* Feedback sequence */
+.sequence {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px;
+  margin-bottom: 14px;
+}
+.seq-steps { display: flex; flex-direction: column; gap: 0; }
+.seq-step {
+  display: flex;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+}
+.seq-step:last-child { border-bottom: none; }
+.seq-num {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  color: var(--blue);
+  background: var(--blue-bg);
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.seq-title { font-size: 13px; font-weight: 500; margin-bottom: 2px; }
+.seq-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+/* Responsive */
+@media (max-width: 760px) {
+  .sidebar { display: none; }
+  .main { padding: 24px 20px; }
+  .doc-grid { grid-template-columns: 1fr; }
+  .screen-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">Design doc</div>
+      <div class="logo-name">Forex Sim Platform</div>
+    </div>
+    <div class="nav-label">Sections</div>
+    <a class="nav-item active" onclick="show('wireframes', this)" href="#">
+      <span class="nav-dot"></span> Wireframes
+    </a>
+    <a class="nav-item" onclick="show('philosophy', this)" href="#">
+      <span class="nav-dot"></span> Design philosophy
+    </a>
+    <a class="nav-item" onclick="show('typography', this)" href="#">
+      <span class="nav-dot"></span> Typography
+    </a>
+    <a class="nav-item" onclick="show('colors', this)" href="#">
+      <span class="nav-dot"></span> Color system
+    </a>
+    <a class="nav-item" onclick="show('ux', this)" href="#">
+      <span class="nav-dot"></span> UX principles
+    </a>
+    <a class="nav-item" onclick="show('interaction', this)" href="#">
+      <span class="nav-dot"></span> Interaction design
+    </a>
+    <div class="nav-label" style="margin-top:24px">Meta</div>
+    <a class="nav-item" href="#" style="pointer-events:none;opacity:.4">
+      <span class="nav-dot"></span> v1.0 — May 2026
+    </a>
+  </aside>
+
+  <!-- Main -->
+  <main class="main">
+
+    <!-- WIREFRAMES -->
+    <div id="wireframes" class="panel active">
+      <div class="page-header">
+        <div class="page-tag mono">01 / Wireframes</div>
+        <h1 class="page-title">8 key screens</h1>
+        <p class="page-desc">Low-fidelity structure for every major screen. Each wireframe defines the layout zones, key components, and primary user interactions.</p>
+      </div>
+
+      <div class="sec">
+        <div class="sec-label">Screen structures</div>
+        <div class="screen-grid">
+
+          <div class="screen-card">
+            <div class="screen-header"><span class="screen-name">Main dashboard</span><span class="screen-tag">Home</span></div>
+            <div class="screen-body">
+              <div class="wf-frame">
+                <div class="wf-row"><span class="wf-key">Top bar</span><span class="wf-val">Logo · Search · Notifications · Avatar</span></div>
+                <div class="wf-row"><span class="wf-key">Sidebar</span><span class="wf-val">Home · Campaign · Arena · Sandbox · Profile</span></div>
+                <div class="wf-row"><span class="wf-key">Main</span><span class="wf-val">Market cards · Active mission · Trade log</span></div>
+                <div class="wf-row"><span class="wf-key">Right</span><span class="wf-val">XP bar · Leaderboard snippet</span></div>
+              </div>
+              <div class="chip-row"><span class="chip">Market card</span><span class="chip">Mission banner</span><span class="chip">Trade log</span><span class="chip">XP bar</span></div>
+              <ul class="action-list">
+                <li>Click mission banner to start campaign</li>
+                <li>Click market card to open analysis screen</li>
+                <li>Click trade row to see result details</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="screen-card">
+            <div class="screen-header"><span class="screen-name">Event analysis</span><span class="screen-tag">Campaign</span></div>
+            <div class="screen-body">
+              <div class="wf-frame">
+                <div class="wf-row"><span class="wf-key">Header</span><span class="wf-val">Event title · Timer · Difficulty badge</span></div>
+                <div class="wf-row"><span class="wf-key">Left</span><span class="wf-val">News card · Key data · Analyst hints</span></div>
+                <div class="wf-row"><span class="wf-key">Right</span><span class="wf-val">Pair selector · Impact scale · Decision panel</span></div>
+                <div class="wf-row"><span class="wf-key">Bottom</span><span class="wf-val">Confirm analysis button</span></div>
+              </div>
+              <div class="chip-row"><span class="chip">News card</span><span class="chip">Impact slider</span><span class="chip">Timer ring</span><span class="chip">Hint tooltip</span></div>
+              <ul class="action-list">
+                <li>Select bullish or bearish direction</li>
+                <li>Expand analyst hint for guidance</li>
+                <li>Confirm to proceed to trade</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="screen-card">
+            <div class="screen-header"><span class="screen-name">Trading interface</span><span class="screen-tag">Core</span></div>
+            <div class="screen-body">
+              <div class="wf-frame">
+                <div class="wf-row"><span class="wf-key">Top</span><span class="wf-val">Pair info · Spread · Session clock</span></div>
+                <div class="wf-row"><span class="wf-key">Main</span><span class="wf-val">Candlestick chart · Drawing tools</span></div>
+                <div class="wf-row"><span class="wf-key">Right</span><span class="wf-val">Order panel: lot size · SL · TP · Buy/Sell</span></div>
+                <div class="wf-row"><span class="wf-key">Bottom</span><span class="wf-val">Open positions · Account balance</span></div>
+              </div>
+              <div class="chip-row"><span class="chip">Candlestick chart</span><span class="chip">Order panel</span><span class="chip">Risk meter</span><span class="chip">Position table</span></div>
+              <ul class="action-list">
+                <li>Adjust lot size to see live risk update</li>
+                <li>Click Buy or Sell to place trade</li>
+                <li>Drag SL/TP lines directly on chart</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="screen-card">
+            <div class="screen-header"><span class="screen-name">Results screen</span><span class="screen-tag">Feedback</span></div>
+            <div class="screen-body">
+              <div class="wf-frame">
+                <div class="wf-row"><span class="wf-key">Top</span><span class="wf-val">Outcome badge (Win / Loss) · P&L number</span></div>
+                <div class="wf-row"><span class="wf-key">Center</span><span class="wf-val">Chart replay · Entry and exit markers · XP animation</span></div>
+                <div class="wf-row"><span class="wf-key">Bottom</span><span class="wf-val">Lesson summary card · Next trade button</span></div>
+              </div>
+              <div class="chip-row"><span class="chip">Outcome badge</span><span class="chip">P&L card</span><span class="chip">Chart replay</span><span class="chip">Lesson card</span></div>
+              <ul class="action-list">
+                <li>Watch chart replay of the trade</li>
+                <li>Read lesson card to understand outcome</li>
+                <li>Proceed to next scenario or review</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="screen-card">
+            <div class="screen-header"><span class="screen-name">Profile and progress</span><span class="screen-tag">Profile</span></div>
+            <div class="screen-body">
+              <div class="wf-frame">
+                <div class="wf-row"><span class="wf-key">Top</span><span class="wf-val">Avatar · Name · Level badge · Total XP</span></div>
+                <div class="wf-row"><span class="wf-key">Center</span><span class="wf-val">Skill radar chart · Win rate · Avg R:R</span></div>
+                <div class="wf-row"><span class="wf-key">Bottom</span><span class="wf-val">Achievement badges · Campaign progress map</span></div>
+              </div>
+              <div class="chip-row"><span class="chip">Radar chart</span><span class="chip">Stat cards</span><span class="chip">Badge grid</span><span class="chip">Level ring</span></div>
+              <ul class="action-list">
+                <li>Click badge to see unlock conditions</li>
+                <li>Click campaign stage to replay mission</li>
+                <li>Share profile card via social link</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="screen-card">
+            <div class="screen-header"><span class="screen-name">Leaderboard</span><span class="screen-tag">Competition</span></div>
+            <div class="screen-body">
+              <div class="wf-frame">
+                <div class="wf-row"><span class="wf-key">Top</span><span class="wf-val">Filter tabs: Global · Weekly · Friends</span></div>
+                <div class="wf-row"><span class="wf-key">Top 3</span><span class="wf-val">Podium cards with avatars and scores</span></div>
+                <div class="wf-row"><span class="wf-key">List</span><span class="wf-val">Rank · Avatar · Name · XP · Win rate</span></div>
+                <div class="wf-row"><span class="wf-key">Bottom</span><span class="wf-val">Your position sticky row</span></div>
+              </div>
+              <div class="chip-row"><span class="chip">Podium cards</span><span class="chip">Rank list</span><span class="chip">Filter tabs</span><span class="chip">Sticky row</span></div>
+              <ul class="action-list">
+                <li>Filter by time period or region</li>
+                <li>Click user to view their public profile</li>
+                <li>Click Challenge to start Arena duel</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="screen-card">
+            <div class="screen-header"><span class="screen-name">Arena mode</span><span class="screen-tag">Multiplayer</span></div>
+            <div class="screen-body">
+              <div class="wf-frame">
+                <div class="wf-row"><span class="wf-key">Top</span><span class="wf-val">Battle header · Opponent avatar · Timer</span></div>
+                <div class="wf-row"><span class="wf-key">Split</span><span class="wf-val">Your trade panel (left) · Opponent stats (right)</span></div>
+                <div class="wf-row"><span class="wf-key">Center</span><span class="wf-val">Shared chart · Same pair for both players</span></div>
+                <div class="wf-row"><span class="wf-key">Bottom</span><span class="wf-val">Team chat · Spectator count · Round tracker</span></div>
+              </div>
+              <div class="chip-row"><span class="chip">Battle header</span><span class="chip">Split view</span><span class="chip">Round tracker</span><span class="chip">Team chat</span></div>
+              <ul class="action-list">
+                <li>Place trade under time pressure</li>
+                <li>Watch opponent P&L update live</li>
+                <li>Use chat for team strategy</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="screen-card">
+            <div class="screen-header"><span class="screen-name">Sandbox mode</span><span class="screen-tag">Free play</span></div>
+            <div class="screen-body">
+              <div class="wf-frame">
+                <div class="wf-row"><span class="wf-key">Top</span><span class="wf-val">Scenario selector · Date range · Speed control</span></div>
+                <div class="wf-row"><span class="wf-key">Main</span><span class="wf-val">Historical chart · Replay timeline scrubber</span></div>
+                <div class="wf-row"><span class="wf-key">Right</span><span class="wf-val">Trade panel · Virtual account balance</span></div>
+                <div class="wf-row"><span class="wf-key">Bottom</span><span class="wf-val">Scenario notes · Save session button</span></div>
+              </div>
+              <div class="chip-row"><span class="chip">Scenario picker</span><span class="chip">Timeline scrubber</span><span class="chip">Speed slider</span><span class="chip">Virtual account</span></div>
+              <ul class="action-list">
+                <li>Scrub timeline to any historical moment</li>
+                <li>Adjust replay speed from 1x to 50x</li>
+                <li>Save scenario as a personal challenge</li>
+              </ul>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- DESIGN PHILOSOPHY -->
+    <div id="philosophy" class="panel">
+      <div class="page-header">
+        <div class="page-tag mono">02 / Design philosophy</div>
+        <h1 class="page-title">Layout decisions</h1>
+        <p class="page-desc">The thinking behind every major design choice — from the sidebar layout to the use of cards and modular components.</p>
+      </div>
+      <div class="sec">
+        <div class="sec-label">A. Design philosophy</div>
+        <div class="doc-grid">
+          <div class="doc-card">
+            <div class="doc-card-title">The goal of the interface</div>
+            <div class="doc-card-body">
+              <p>This platform needs to do three things at once: teach real trading skills, feel like a real trading tool, and keep the user engaged through game-like progression.</p>
+              <p>Every screen decision starts from this question: does this help the user learn faster without feeling like they are in a classroom?</p>
+              <p>The answer is a trading simulation interface where the environment itself is the teacher.</p>
+            </div>
+          </div>
+          <div class="doc-card">
+            <div class="doc-card-title">Why a trading platform style is used</div>
+            <div class="doc-card-body">
+              <p>Beginners who use a toy-looking interface never build real confidence. A realistic interface creates muscle memory for tools like MT5 and TradingView before the user ever touches real money.</p>
+              <p>The platform looks like Bloomberg or TradingView on the outside but behaves like a game on the inside. Difficulty scales, XP rewards good decisions, and mistakes become lessons rather than losses.</p>
+            </div>
+          </div>
+          <div class="doc-card">
+            <div class="doc-card-title">B. Why sidebar and dashboard layout</div>
+            <div class="doc-card-body">
+              <p>A sidebar keeps all modes visible at all times. The user never feels lost. Campaign, Arena, and Sandbox are always one click away.</p>
+              <p>The dashboard layout puts the most important information in the center and keeps secondary actions on the right. This matches how professional trading terminals are organized, so the skill transfers.</p>
+            </div>
+          </div>
+          <div class="doc-card">
+            <div class="doc-card-title">Why cards and modular components</div>
+            <div class="doc-card-body">
+              <p>Cards isolate one piece of information at a time. In a fast-decision environment, a crowded screen causes hesitation and errors.</p>
+              <p>Modular components also mean the same card design works on mobile and desktop. A market summary card looks the same whether it appears on the dashboard or inside the results screen.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TYPOGRAPHY -->
+    <div id="typography" class="panel">
+      <div class="page-header">
+        <div class="page-tag mono">03 / Typography</div>
+        <h1 class="page-title">Type system</h1>
+        <p class="page-desc">Two typefaces, two weights, clear hierarchy. Every size and weight choice is made to support fast reading under pressure.</p>
+      </div>
+      <div class="sec">
+        <div class="sec-label">C. Type scale</div>
+        <div class="type-table">
+          <div class="type-row"><div class="type-sample" style="font-size:26px;font-weight:600">Screen title</div><div class="type-meta">H1 · 26px · 600</div></div>
+          <div class="type-row"><div class="type-sample" style="font-size:20px;font-weight:600">Section heading</div><div class="type-meta">H2 · 20px · 600</div></div>
+          <div class="type-row"><div class="type-sample" style="font-size:15px;font-weight:500">Card title</div><div class="type-meta">H3 · 15px · 500</div></div>
+          <div class="type-row"><div class="type-sample" style="font-size:13px;color:var(--muted)">Body text and descriptions across all screens in this platform.</div><div class="type-meta">Body · 13px · 400</div></div>
+          <div class="type-row"><div class="type-sample mono" style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--hint)">Section label</div><div class="type-meta">Label · 10px · mono</div></div>
+          <div class="type-row"><div class="type-sample" style="font-size:22px;font-weight:600;color:var(--green)">+$284.50</div><div class="type-meta">P&L · 22px · green</div></div>
+          <div class="type-row"><div class="type-sample" style="font-size:22px;font-weight:600;color:var(--red)">–$91.20</div><div class="type-meta">P&L · 22px · red</div></div>
+        </div>
+        <div class="doc-grid">
+          <div class="doc-card">
+            <div class="doc-card-title">Font choice</div>
+            <div class="doc-card-body">
+              <p>The platform uses Syne for all interface text — a geometric sans-serif that feels precise and modern without being cold. DM Mono is used for all code-like values: prices, XP numbers, timestamps, and labels.</p>
+              <p>Two weights only: 400 for reading, 500 or 600 for hierarchy. This keeps the interface calm and focused.</p>
+            </div>
+          </div>
+          <div class="doc-card">
+            <div class="doc-card-title">Why readability matters here</div>
+            <div class="doc-card-body">
+              <p>In a trading environment, a user may need to read a price, a risk level, and a news headline at the same time. Poor typography causes real mistakes.</p>
+              <p>Numbers use monospace figures so columns of prices align perfectly. P&L values always combine color with the number — never color alone — so colorblind users are not excluded.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- COLORS -->
+    <div id="colors" class="panel">
+      <div class="page-header">
+        <div class="page-tag mono">04 / Color system</div>
+        <h1 class="page-title">Color system</h1>
+        <p class="page-desc">Every color has a specific meaning. No color is used for decoration alone. The system is designed to communicate state at a glance.</p>
+      </div>
+      <div class="sec">
+        <div class="sec-label">D. Palette</div>
+        <div class="swatch-grid">
+          <div class="swatch-item"><div class="swatch-color" style="background:#0d0f14"></div><div class="swatch-name">Background</div><div class="swatch-hex">#0d0f14</div></div>
+          <div class="swatch-item"><div class="swatch-color" style="background:#1a1e2a"></div><div class="swatch-name">Surface</div><div class="swatch-hex">#1a1e2a</div></div>
+          <div class="swatch-item"><div class="swatch-color" style="background:#2c8af4"></div><div class="swatch-name">Blue — info</div><div class="swatch-hex">#2c8af4</div></div>
+          <div class="swatch-item"><div class="swatch-color" style="background:#1d9e75"></div><div class="swatch-name">Green — profit</div><div class="swatch-hex">#1d9e75</div></div>
+          <div class="swatch-item"><div class="swatch-color" style="background:#e24b4a"></div><div class="swatch-name">Red — risk</div><div class="swatch-hex">#e24b4a</div></div>
+          <div class="swatch-item"><div class="swatch-color" style="background:#ef9f27"></div><div class="swatch-name">Amber — caution</div><div class="swatch-hex">#ef9f27</div></div>
+          <div class="swatch-item"><div class="swatch-color" style="background:#7f77dd"></div><div class="swatch-name">Purple — XP</div><div class="swatch-hex">#7f77dd</div></div>
+          <div class="swatch-item"><div class="swatch-color" style="background:#888780"></div><div class="swatch-name">Gray — neutral</div><div class="swatch-hex">#888780</div></div>
+        </div>
+        <div class="doc-grid">
+          <div class="doc-card">
+            <div class="doc-card-title">Why dark mode is the default</div>
+            <div class="doc-card-body">
+              <p>Every professional trading terminal uses a dark interface. Bloomberg, MT5, and TradingView are all dark by default. Matching this aesthetic immediately signals to the user that this is a serious tool.</p>
+              <p>Dark backgrounds also make color signals like green and red stand out more clearly, which is important in a fast-decision environment.</p>
+            </div>
+          </div>
+          <div class="doc-card">
+            <div class="doc-card-title">Color meaning system</div>
+            <div class="doc-card-body">
+              <p>Blue means information: news cards, data points, and interface actions. Green means profit and correct analysis. Red means risk, loss, and warnings. Amber means caution and time pressure.</p>
+              <p>Purple is reserved for gamification only — XP, levels, and achievements. This keeps the game layer visually separate from the trading layer so users do not confuse the two.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- UX PRINCIPLES -->
+    <div id="ux" class="panel">
+      <div class="page-header">
+        <div class="page-tag mono">05 / UX principles</div>
+        <h1 class="page-title">UX principles</h1>
+        <p class="page-desc">The five core principles that every design decision must support. When two design choices conflict, these principles decide which one wins.</p>
+      </div>
+      <div class="sec">
+        <div class="sec-label">E. Principles</div>
+        <div class="principle-card">
+          <div class="principle-title">Simplicity under complexity</div>
+          <div class="principle-body">The platform contains a lot of information: charts, orders, news, scores. The design hides complexity until the user needs it. A beginner sees a simple layout. An advanced user can expand panels and access deeper analytics. No feature is buried, but no feature shouts either.</div>
+        </div>
+        <div class="principle-card" style="border-left-color:var(--green)">
+          <div class="principle-title">Fast decision-making support</div>
+          <div class="principle-body">Every screen is designed around a single primary action. On the trading screen the primary action is placing a trade. On the event analysis screen it is selecting a direction. Secondary information supports the decision without competing for attention. The most important button is always the largest and most visible element on the screen.</div>
+        </div>
+        <div class="principle-card" style="border-left-color:var(--amber)">
+          <div class="principle-title">Feedback-driven learning</div>
+          <div class="principle-body">Every action produces immediate, clear feedback. A good trade earns a green result card, an XP animation, and a short lesson about what made it correct. A bad trade earns a red result card, a clear explanation of the error, and a suggestion to improve. The user always knows why the outcome happened, not just what it was.</div>
+        </div>
+        <div class="principle-card" style="border-left-color:var(--purple)">
+          <div class="principle-title">Progression visibility</div>
+          <div class="principle-body">The user can always see how far they have come and how far they have to go. The XP bar is visible in the sidebar on every screen. The campaign progress map shows completed and upcoming scenarios. Achievement badges are earned and displayed publicly. Progress never feels invisible.</div>
+        </div>
+        <div class="principle-card" style="border-left-color:var(--muted)">
+          <div class="principle-title">Realism over simplification</div>
+          <div class="principle-body">When there is a choice between a simpler toy-like interface and a more realistic trading interface, the platform chooses realism. The goal is for users to feel ready to open a real account after completing the campaign. A simplified interface would defeat the entire purpose of the platform.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- INTERACTION DESIGN -->
+    <div id="interaction" class="panel">
+      <div class="page-header">
+        <div class="page-tag mono">06 / Interaction design</div>
+        <h1 class="page-title">Interaction design</h1>
+        <p class="page-desc">How users move between screens, how feedback is delivered after trades, and how XP and levels are visualized across the platform.</p>
+      </div>
+      <div class="sec">
+        <div class="sec-label">F. Screen navigation flow</div>
+        <div class="flow-wrap">
+          <div class="flow-steps">
+            <div class="flow-step">Dashboard</div><div class="flow-arrow">→</div>
+            <div class="flow-step">Event analysis</div><div class="flow-arrow">→</div>
+            <div class="flow-step">Trading interface</div><div class="flow-arrow">→</div>
+            <div class="flow-step">Results screen</div><div class="flow-arrow">→</div>
+            <div class="flow-step">Next scenario</div>
+          </div>
+          <div class="flow-desc">The main user journey is linear within a session: analyze the news, place the trade, see the result. The sidebar allows jumping to any mode at any time. Back navigation is always available. No screen traps the user.</div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-label">Post-trade feedback sequence</div>
+        <div class="sequence">
+          <div class="seq-steps">
+            <div class="seq-step"><div class="seq-num">1</div><div><div class="seq-title">Outcome badge appears</div><div class="seq-desc">Win, Loss, or Break-even badge appears large and centered. The user knows the result in under one second.</div></div></div>
+            <div class="seq-step"><div class="seq-num">2</div><div><div class="seq-title">P&L counter animates</div><div class="seq-desc">The profit or loss number counts up or down to the final value. Green for profit, red for loss.</div></div></div>
+            <div class="seq-step"><div class="seq-num">3</div><div><div class="seq-title">Chart replay starts</div><div class="seq-desc">The chart replays from entry to exit automatically, with clear markers showing where the trade opened and closed.</div></div></div>
+            <div class="seq-step"><div class="seq-num">4</div><div><div class="seq-title">Lesson card slides in</div><div class="seq-desc">A short lesson explains what happened and why. On a loss it gives a concrete improvement tip. On a win it reinforces the correct behavior.</div></div></div>
+            <div class="seq-step"><div class="seq-num">5</div><div><div class="seq-title">XP animation fires</div><div class="seq-desc">XP earned floats up from the result card and fills into the sidebar XP bar. The whole sequence takes about 4 seconds.</div></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="sec">
+        <div class="sec-label">XP and level visualization</div>
+        <div class="xp-demo">
+          <div class="xp-row">
+            <div class="xp-badge">12</div>
+            <div class="xp-info">
+              <div class="xp-label">Level 12 — Intermediate Trader · 3,420 / 4,000 XP</div>
+              <div class="xp-bar-track"><div class="xp-bar-fill"></div></div>
+            </div>
+            <div class="xp-next mono">580 to next</div>
+          </div>
+          <div class="xp-body">The level badge and XP bar live in the sidebar so they are always visible. When XP is earned, a floating counter animates from the trade result into the XP bar, which fills visibly. Level-up moments trigger a full-screen celebration, then return to the dashboard with the new level displayed. Every XP gain shows its source: correct analysis, good risk management, or a streak bonus.</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+function show(id, el) {
+  event.preventDefault();
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+</script>
+
+</body>
+</html>
